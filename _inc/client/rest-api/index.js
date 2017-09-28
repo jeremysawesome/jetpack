@@ -276,9 +276,9 @@ function catchJsonParseError( e, redirected ) {
 }
 
 // Catches TypeError coming from the Fetch API implementation
-function catchNetworkErrors( e ) {
+function catchNetworkErrors() {
 	//Either one of:
 	// * A preflight error like a redirection to an external site (which results in a CORS)
 	// * A preflight error like ERR_TOO_MANY_REDIRECTS
-	throw new Error( `Could not reach Jetpack's REST API. Check the browser's console for more details` );
+	throw new Error( "Could not reach Jetpack's REST API. Check the browser's console for more details" );
 }
