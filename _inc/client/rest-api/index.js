@@ -261,7 +261,7 @@ function checkStatus( response ) {
 	}
 
 	return response.json().then( json => {
-		const error = new Error( json.message );
+		const error = new Error( `${ json.message } (Status ${ response.status })` );
 		error.response = json;
 		throw error;
 	} );
