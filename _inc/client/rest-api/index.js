@@ -256,7 +256,7 @@ function checkStatus( response ) {
 
 	if ( response.status === 404 ) {
 		return new Promise( () => {
-			throw new Error( `Couldn't reach Jetpack's REST API (404)` );
+			throw new Error( `Couldn't reach Jetpack's REST API (404). ${ response.redirected ? 'Redirected' : '' }` );
 		} );
 	}
 
@@ -268,11 +268,11 @@ function checkStatus( response ) {
 }
 
 function parseJsonResponse( response ) {
-	return response.json().catch( catchJsonParseError );
+	return response.json().catch( e => catchJsonParseError( e, response.redirected ) );
 }
 
-function catchJsonParseError( e ) {
-	throw new Error( `Couldn't understand Jetpack's REST API response (${ e.name })` );
+function catchJsonParseError( e, redirected ) {
+	throw new Error( `Couldn't understand Jetpack's REST API response (${ e.name }). ${ redirected ? 'Redirected' : '' }` );
 }
 
 // Catches TypeError coming from the Fetch API implementation
