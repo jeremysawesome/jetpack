@@ -48,26 +48,26 @@ function JetpackRestApiClient( root, nonce ) {
 		},
 
 		fetchSiteConnectionStatus: () => getRequest( `${ apiRoot }jetpack/v4/connection`, getParams )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		fetchUserConnectionData: () => getRequest( `${ apiRoot }jetpack/v4/connection/data`, getParams )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		disconnectSite: () => postRequest( `${ apiRoot }jetpack/v4/connection`, postParams, {
 			body: JSON.stringify( { isActive: false } )
 		} )
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		fetchConnectUrl: () => getRequest( `${ apiRoot }jetpack/v4/connection/url`, getParams )
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		unlinkUser: () => postRequest( `${ apiRoot }jetpack/v4/connection/user`, postParams, {
 			body: JSON.stringify( { linked: false } )
 		} )
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		jumpStart: ( action ) => {
 			let active;
@@ -81,16 +81,16 @@ function JetpackRestApiClient( root, nonce ) {
 				body: JSON.stringify( { active } )
 			} )
 				.then( checkStatus )
-				.then( response => response.json().catch( catchJsonParseError ) );
+				.then( parseJsonResponse );
 		},
 
 		fetchModules: () => getRequest( `${ apiRoot }jetpack/v4/module/all`, getParams )
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		fetchModule: ( slug ) => getRequest( `${ apiRoot }jetpack/v4/module/${ slug }`, getParams )
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		activateModule: ( slug ) => postRequest(
 			`${ apiRoot }jetpack/v4/module/${ slug }/active`,
@@ -100,7 +100,7 @@ function JetpackRestApiClient( root, nonce ) {
 			}
 		)
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		deactivateModule: ( slug ) => postRequest(
 			`${ apiRoot }jetpack/v4/module/${ slug }/active`,
@@ -118,7 +118,7 @@ function JetpackRestApiClient( root, nonce ) {
 			}
 		)
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		updateSettings: ( newOptionValues ) => postRequest(
 			`${ apiRoot }jetpack/v4/settings`,
@@ -128,11 +128,11 @@ function JetpackRestApiClient( root, nonce ) {
 			}
 		)
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		getProtectCount: () => getRequest( `${ apiRoot }jetpack/v4/module/protect/data`, getParams )
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		resetOptions: ( options ) => postRequest(
 			`${ apiRoot }jetpack/v4/options/${ options }`,
@@ -142,19 +142,19 @@ function JetpackRestApiClient( root, nonce ) {
 			}
 		)
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		getVaultPressData: () => getRequest( `${ apiRoot }jetpack/v4/module/vaultpress/data`, getParams )
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		getAkismetData: () => getRequest( `${ apiRoot }jetpack/v4/module/akismet/data`, getParams )
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		checkAkismetKey: () => getRequest( `${ apiRoot }jetpack/v4/module/akismet/key/check`, getParams )
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		checkAkismetKeyTyped: apiKey => postRequest(
 			`${ apiRoot }jetpack/v4/module/akismet/key/check`,
@@ -164,34 +164,34 @@ function JetpackRestApiClient( root, nonce ) {
 			}
 		)
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		fetchStatsData: ( range ) => getRequest( statsDataUrl( range ), getParams )
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		getPluginUpdates: () => getRequest( `${ apiRoot }jetpack/v4/updates/plugins`, getParams )
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		fetchSettings: () => getRequest( `${ apiRoot }jetpack/v4/settings`, getParams )
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		updateSetting: ( updatedSetting ) => postRequest( `${ apiRoot }jetpack/v4/settings`, postParams, {
 			body: JSON.stringify( updatedSetting )
 		} )
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		fetchSiteData: () => getRequest( `${ apiRoot }jetpack/v4/site`, getParams )
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) )
+			.then( parseJsonResponse )
 			.then( body => JSON.parse( body.data ) ),
 
 		fetchSiteFeatures: () => getRequest( `${ apiRoot }jetpack/v4/site/features`, getParams )
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) )
+			.then( parseJsonResponse )
 			.then( body => JSON.parse( body.data ) ),
 
 		dismissJetpackNotice: ( notice ) => postRequest(
@@ -202,11 +202,11 @@ function JetpackRestApiClient( root, nonce ) {
 			}
 		)
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) ),
+			.then( parseJsonResponse ),
 
 		fetchPluginsData: () => getRequest( `${ apiRoot }jetpack/v4/plugins`, getParams )
 			.then( checkStatus )
-			.then( response => response.json().catch( catchJsonParseError ) )
+			.then( parseJsonResponse )
 	};
 
 	function addCacheBuster( route ) {
@@ -257,6 +257,10 @@ function checkStatus( response ) {
 		error.response = json;
 		throw error;
 	} );
+}
+
+function parseJsonResponse( response ) {
+	return response.json().catch( catchJsonParseError );
 }
 
 function catchJsonParseError( e ) {
