@@ -256,7 +256,7 @@ function checkStatus( response ) {
 		const error = new Error( json.message );
 		error.response = json;
 		throw error;
-	} ).catch( catchJsonParseError );
+	} );
 }
 
 function catchJsonParseError( e ) {
