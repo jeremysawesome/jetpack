@@ -253,6 +253,13 @@ function checkStatus( response ) {
 	if ( response.status >= 200 && response.status < 300 ) {
 		return response;
 	}
+
+	if ( response.status === 404 ) {
+		return new Promise( () => {
+			throw new Error( `Couldn't reach Jetpack's REST API (404)` );
+		} );
+	}
+
 	return response.json().then( json => {
 		const error = new Error( json.message );
 		error.response = json;
