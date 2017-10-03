@@ -195,43 +195,48 @@ abstract class Jetpack_JSON_API_Plugins_Endpoint extends Jetpack_JSON_API_Endpoi
 	 * Ref: https://codex.wordpress.org/Plugin_API/Filter_Reference/plugin_action_links_(plugin_file_name)
 	 * @return array of plugin action links (key: link name value: url)
 	 */
-	 protected function get_plugin_action_links( $plugin_file ) {
-		 $formatted_action_links = array();
+	protected function get_plugin_action_links( $plugin_file ) {
+		$formatted_action_links = array();
 
-		 // Some sites may have DOM disabled in PHP
-		 if ( ! class_exists( 'DOMDocument' ) ) {
-			 return $formatted_action_links;
-		 }
+		// Some sites may have DOM disabled in PHP
+		if ( ! class_exists( 'DOMDocument' ) ) {
+			return $formatted_action_links;
+		}
 
-		 $action_links = array();
-		 /** This filter is documented in src/wp-admin/includes/class-wp-plugins-list-table.php */
-		 $action_links = apply_filters( 'plugin_action_links', $action_links, $plugin_file, null, 'all' );
-		 /** This filter is documented in src/wp-admin/includes/class-wp-plugins-list-table.php */
-		 $action_links = apply_filters( "plugin_action_links_{$plugin_file}", $action_links, $plugin_file, null, 'all' );
-		 if ( count( $action_links ) > 0 ) {
-			 $dom_doc = new DOMDocument;
-			 foreach( $action_links as $action_link ) {
-				 $dom_doc->loadHTML( mb_convert_encoding( $action_link, 'HTML-ENTITIES', 'UTF-8' ) );
-				 $link_elements = $dom_doc->getElementsByTagName( 'a' );
-				 if ( $link_elements->length == 0 ) {
-					 continue;
-				 }
+		$action_links = array();
+		/** This filter is documented in src/wp-admin/includes/class-wp-plugins-list-table.php */
+		$action_links = apply_filters( 'plugin_action_links', $action_links, $plugin_file, null, 'all' );
+		/** This filter is documented in src/wp-admin/includes/class-wp-plugins-list-table.php */
+		$action_links = apply_filters( "plugin_action_links_{$plugin_file}", $action_links, $plugin_file, null, 'all' );
+		if ( count( $action_links ) > 0 ) {
+			$dom_doc = new DOMDocument;
+			foreach ( $action_links as $action_link ) {
+				// The @ is not enough to suppress errors when dealing with libxml,
+				// we have to tell it directly how we want to handle errors.
+				libxml_use_internal_errors( true );
+				$dom_doc->loadHTML( mb_convert_encoding( $action_link, 'HTML-ENTITIES', 'UTF-8' ) );
+				libxml_use_internal_errors( false );
 
-				 $link_element = $link_elements->item( 0 );
-				 if ( $link_element->hasAttribute( 'href' ) && $link_element->nodeValue ) {
-					 $link_url = trim( $link_element->getAttribute( 'href' ) );
+				$link_elements = $dom_doc->getElementsByTagName( 'a' );
+				if ( $link_elements->length == 0 ) {
+					continue;
+				}
 
-					 // Add the full admin path to the url if the plugin did not provide it
-					 $link_url_scheme = wp_parse_url( $link_url, PHP_URL_SCHEME );
-					 if ( empty( $link_url_scheme ) ) {
-						 $link_url = admin_url( $link_url );
-					 }
+				$link_element = $link_elements->item( 0 );
+				if ( $link_element->hasAttribute( 'href' ) && $link_element->nodeValue ) {
+					$link_url = trim( $link_element->getAttribute( 'href' ) );
 
-					 $formatted_action_links[ $link_element->nodeValue ] = $link_url;
-				 }
-			 }
-		 }
+					// Add the full admin path to the url if the plugin did not provide it
+					$link_url_scheme = wp_parse_url( $link_url, PHP_URL_SCHEME );
+					if ( empty( $link_url_scheme ) ) {
+						$link_url = admin_url( $link_url );
+					}
 
-		 return $formatted_action_links;
-	 }
+					$formatted_action_links[ $link_element->nodeValue ] = $link_url;
+				}
+			}
+		}
+
+		return $formatted_action_links;
+	}
 }
