@@ -86,7 +86,7 @@ class JetpackTracking {
 	* @return mixed|void
 	*/
 	static function get_tracks_authorized_redirect_targets() {
-		$jetpack_tracks_authorized_redirect_targets = [];
+		$jetpack_tracks_authorized_redirect_targets = array();
 	/**
 		* Array of authorized redirect targets.
 		*
@@ -104,7 +104,7 @@ class JetpackTracking {
 	* @return mixed|void
 	*/
 	static function get_tracks_authorized_event_names() {
-		$jetpack_tracks_authorized_event_names = [];
+		$jetpack_tracks_authorized_event_names = array();
 	/**
 		* Array of authorized event names.
 		*
