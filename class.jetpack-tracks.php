@@ -7,7 +7,7 @@ require_once( dirname( __FILE__ ) . '/_inc/lib/tracks/client.php' );
 
 class JetpackTracking {
 	static $product_name = 'jetpack';
-	static $track_redirects = [];
+	static $track_and_bounce_query_vars = array( 'jetpack_tracks_and_bounce_id', 'jetpack_tracks_and_bounce_event', 'jetpack_tracks_and_bounce_nonce' );
 
 	static function track_jetpack_usage() {
 		if ( ! Jetpack::is_active() ) {
@@ -21,27 +21,18 @@ class JetpackTracking {
 		add_action( 'jetpack_deactivate_module', array( __CLASS__, 'track_deactivate_module'), 1, 1 );
 		add_action( 'jetpack_user_authorized', array( __CLASS__, 'track_user_linked' ) );
 
-		// For track and bounce
-		add_filter( 'query_vars', array( __CLASS__, 'add_query_vars' ) );
+		// for tracking whitelisted external links
+		add_filter( 'query_vars', array( __CLASS__, 'add_track_and_bounce_query_vars' ) );
 		add_filter( 'allowed_redirect_hosts', array( __CLASS__, 'allow_wpcom_domain' ) );
-		add_action( 'parse_request', array( __CLASS__, 'parse_request' ) );
+		add_action( 'parse_request', array( __CLASS__, 'parse_track_and_bounce_request' ) );
+		add_rewrite_rule( 'jetpack-track-and-bounce.php\?(\w*)', 'index.php?$matches[1]', 'top' );
 	}
 
-	static function enqueue_tracks_scripts() {
-		wp_enqueue_script( 'jptracks', plugins_url( '_inc/lib/tracks/tracks-ajax.js', JETPACK__PLUGIN_FILE ), array(), JETPACK__VERSION, true );
-		wp_localize_script( 'jptracks', 'jpTracksAJAX', array(
-			'ajaxurl'            => admin_url( 'admin-ajax.php' ),
-			'jpTracksAJAX_nonce' => wp_create_nonce( 'jp-tracks-ajax-nonce' ),
-		) );
+	static function add_track_and_bounce_query_vars( $query_vars ) {
+		return array_merge( $query_vars, self::$track_and_bounce_query_vars );
 	}
 
-	public function add_query_vars( $query_vars ) {
-		$query_vars[] = 'tracks_and_bounce';
-		$query_vars[] = 'tracks_and_bounce_nonce';
-		return $query_vars;
-	}
-
-	public function allow_wpcom_domain( $domains ) {
+	static function allow_wpcom_domain( $domains ) {
 		if ( empty( $domains ) ) {
 			$domains = array();
 		}
@@ -49,12 +40,24 @@ class JetpackTracking {
 		return array_unique( $domains );
 	}
 
-	public function parse_request( $query ) {
-		if ( ! array_key_exists( 'tracks_and_bounce', $query->query_vars ) ) {
+	static function parse_track_and_bounce_request( $query ) {
+		if ( count( array_intersect_key( array_flip( self::$track_and_bounce_query_vars ), $query->query_vars ) ) !== count( self::$track_and_bounce_query_vars ) ) {
 			return;
 		}
 
-		if ( ! wp_verify_nonce( $query->query_vars[ 'tracks_and_bounce_nonce' ], 'jp-tracks-masterbar-nonce' ) ) {
+		$track_id = $query->query_vars[ 'jetpack_tracks_and_bounce_id' ];
+		$jetpack_tracks_authorized_redirect_targets = self::get_tracks_authorized_redirect_targets();
+		if ( ! array_key_exists( $track_id, $jetpack_tracks_authorized_redirect_targets ) ) {
+			return;
+		}
+
+		$event_name = $query->query_vars[ 'jetpack_tracks_and_bounce_event' ];
+		$jetpack_tracks_authorized_event_names = self::get_tracks_authorized_event_names();
+		if ( ! in_array( $event_name, $jetpack_tracks_authorized_event_names ) ) {
+			return;
+		}
+
+		if ( ! wp_verify_nonce( $query->query_vars[ 'jetpack_tracks_and_bounce_nonce' ], 'jp-masterbar-tracks-nonce' ) ) {
 			// no nonce, wrong link or missing tracking information, push back to settings page
 			wp_safe_redirect(
 				add_query_arg(
@@ -65,26 +68,59 @@ class JetpackTracking {
 			die();
 		}
 
-		$trackId = $query->query_vars[ 'tracks_and_bounce' ];
-		if ( ! array_key_exists( $trackId, self::$track_redirects ) ) {
-			return;
-		}
-
-		$track_target = self::$track_redirects[ $trackId ];
-
-		self::record_user_event(
-			'track_and_bounce',
-			array(
-				'source' => $trackId,
-				'target' => $track_target
-			)
+		$redirect_target = $jetpack_tracks_authorized_redirect_targets[ $track_id ];
+		$tracks_data = array(
+			'source' => $track_id,
+			'target' => $redirect_target
 		);
-		wp_safe_redirect( $track_target );
+
+		JetpackTracking::record_user_event( $event_name, $tracks_data );
+		wp_safe_redirect( $redirect_target );
 		die();
 	}
 
-	static function add_redirect( $events ) {
-		self::$track_redirects = array_merge( self::$track_redirects, $events );
+	/**
+	* Gets an array of authorized redirect targets.
+	*
+	* @since 5.5
+	* @return mixed|void
+	*/
+	static function get_tracks_authorized_redirect_targets() {
+		$jetpack_tracks_authorized_redirect_targets = [];
+	/**
+		* Array of authorized redirect targets.
+		*
+		* @since 5.5
+		*
+		* @param array $jetpack_tracks_authorized_redirect_targets.
+		*/
+		return apply_filters( 'jetpack_tracks_authorized_redirect_targets', $jetpack_tracks_authorized_redirect_targets );
+	}
+
+	/**
+	* Gets an array of authorized event names.
+	*
+	* @since 5.5
+	* @return mixed|void
+	*/
+	static function get_tracks_authorized_event_names() {
+		$jetpack_tracks_authorized_event_names = [];
+	/**
+		* Array of authorized event names.
+		*
+		* @since 5.5
+		*
+		* @param array $jetpack_tracks_authorized_event_names.
+		*/
+		return apply_filters( 'jetpack_tracks_authorized_event_names', $jetpack_tracks_authorized_event_names );
+	}
+
+	static function enqueue_tracks_scripts() {
+		wp_enqueue_script( 'jptracks', plugins_url( '_inc/lib/tracks/tracks-ajax.js', JETPACK__PLUGIN_FILE ), array(), JETPACK__VERSION, true );
+		wp_localize_script( 'jptracks', 'jpTracksAJAX', array(
+			'ajaxurl'            => admin_url( 'admin-ajax.php' ),
+			'jpTracksAJAX_nonce' => wp_create_nonce( 'jp-tracks-ajax-nonce' ),
+		) );
 	}
 
 	/* User has linked their account */
